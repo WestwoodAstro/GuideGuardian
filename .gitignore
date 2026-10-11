@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Build output (attach dist/PHD2Guard.exe to a GitHub release instead of committing it)
+build/
+dist/
+*.spec
+
+# Logs and diagnostics produced by the app / PHD2 / NINA
+*.log
+*.log.*
+phd2guard_debug_*
+PHD2_GuideLog_*.txt
+PHD2_DebugLog_*.txt
+
+# Personal data and local state
+Session/
+archive/
+*.json
+*.ini
+headless.pid
+headless.stop
+headless.lock
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
