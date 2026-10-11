@@ -2,7 +2,7 @@
 
 A guiding watchdog for astrophotography rigs that use **NINA** and **PHD2**. It watches the quality of your guiding while a NINA
 sequence runs and, when guiding has genuinely failed, stops the exposure, re-centers the target, restarts guiding and
-resumes the sequence, without waiting for you to notice.
+resumes the sequence automagically.
 
 It is a Windows desktop application (PyQt6) with an optional local-network web interface for monitoring and control from
 another computer, tablet or phone.
