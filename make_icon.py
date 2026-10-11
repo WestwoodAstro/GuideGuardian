@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: Copyright (c) 2026 Loran Hughes
 # SPDX-License-Identifier: GPL-3.0-only
-"""Generate assets/phd2guard.ico (16-256 px) from the icon drawn in phd2_guard.render_icon().
+"""Generate assets/guideguardian.ico (16-256 px) from the icon drawn in guide_guardian.render_icon().
 
-    python make_icon.py                  # writes assets/phd2guard.ico
+    python make_icon.py                  # writes assets/guideguardian.ico
     python make_icon.py --preview p.png  # also writes a contact sheet of all sizes (for a quick look)
 
 build_exe.bat runs this before PyInstaller and passes the .ico to --icon. Sizes below 256 px are stored as classic
@@ -21,7 +21,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PyQt6.QtCore import QBuffer, QByteArray, QIODevice, Qt                    # noqa: E402
 from PyQt6.QtGui import QColor, QGuiApplication, QImage, QPainter              # noqa: E402
 
-import phd2_guard as g                                                          # noqa: E402
+import guide_guardian as g                                                          # noqa: E402
 
 
 def png_bytes(img: QImage) -> bytes:
@@ -80,7 +80,7 @@ def preview(path: str) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "phd2guard.ico"))
+    ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "guideguardian.ico"))
     ap.add_argument("--preview", help="also write a contact sheet PNG")
     a = ap.parse_args()
     app = QGuiApplication(sys.argv[:1])

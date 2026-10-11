@@ -1,4 +1,4 @@
-# PHD2 Guard
+# Guide Guardian
 
 A guiding watchdog for astrophotography rigs that use **NINA** and **PHD2**. It watches the quality of your guiding while a NINA
 sequence runs and, when guiding has genuinely failed, stops the exposure, re-centers the target, restarts guiding and
@@ -7,9 +7,9 @@ resumes the sequence, without waiting for you to notice.
 It is a Windows desktop application (PyQt6) with an optional local-network web interface for monitoring and control from
 another computer, tablet or phone.
 
-**[Download the latest release](https://github.com/WestwoodAstro/PHD2Guard/releases/latest)**: a single `PHD2Guard.exe`, nothing to install. Windows 10/11, 64-bit.
+**[Download the latest release](https://github.com/WestwoodAstro/GuideGuardian/releases/latest)**: a single `GuideGuardian.exe`, nothing to install. Windows 10/11, 64-bit.
 
-> **Use at your own risk.** PHD2 Guard stops and restarts your sequence, slews your mount and restarts guiding. Try it with the
+> **Use at your own risk.** Guide Guardian stops and restarts your sequence, slews your mount and restarts guiding. Try it with the
 > NINA and PHD2 simulators before relying on it unattended, and keep NINA's own safety monitor / end-of-sequence steps for
 > parking and closing up. This project is not affiliated with NINA or PHD2.
 
@@ -85,14 +85,14 @@ and after.
 
 ## Installation
 
-**Download the executable.** Get `PHD2Guard.exe` from the [latest release](https://github.com/WestwoodAstro/PHD2Guard/releases/latest) and run it. The exe is not code-signed, so
+**Download the executable.** Get `GuideGuardian.exe` from the [latest release](https://github.com/WestwoodAstro/GuideGuardian/releases/latest) and run it. The exe is not code-signed, so
 Windows SmartScreen may warn on first run: choose *More info*, then *Run anyway*. The release notes list the file's SHA-256.
 
 **Run from source**
 
 ```
 pip install -r requirements.txt
-python phd2_guard.py
+python guide_guardian.py
 ```
 
 **Build a single-file executable**
@@ -102,12 +102,12 @@ build_exe.bat
 ```
 
 This creates a temporary virtual environment, installs the dependencies and PyInstaller, generates the icon and writes
-`dist\PHD2Guard.exe`. The icon is drawn in code (`render_icon()` in `phd2_guard.py`) and used both as the window / taskbar
-icon at run time and, via `make_icon.py`, as the multi-size `assets\phd2guard.ico` embedded in the exe
+`dist\GuideGuardian.exe`. The icon is drawn in code (`render_icon()` in `guide_guardian.py`) and used both as the window / taskbar
+icon at run time and, via `make_icon.py`, as the multi-size `assets\guideguardian.ico` embedded in the exe
 (`python make_icon.py --preview sheet.png` writes a contact sheet of all sizes).
 
 Settings are saved between runs (Windows registry, or an `.ini` file with `--settings-file`). The always-on log is
-`%LOCALAPPDATA%\PHD2Guard\phd2_guard.log`.
+`%LOCALAPPDATA%\GuideGuardian\guide_guardian.log`.
 
 ## The window
 
@@ -120,6 +120,13 @@ The window has three tabs:
   interface. Changes are applied a moment after you stop editing, saved at once and logged, without interrupting an armed
   watchdog (see [Changing settings while monitoring](#changing-settings-while-monitoring)).
 - **About:** the logo, version, copyright and license information.
+
+### Upgrading from PHD2 Guard 1.0.0
+
+The app was called *PHD2 Guard* in version 1.0.0. Under the new name your saved settings are carried over automatically on
+the first run (the old entry is left in place), the program is `GuideGuardian.exe`, and its log folder is
+`%LOCALAPPDATA%\GuideGuardian`. Debug logs written by 1.0.0 (`phd2guard_debug_*.log`) are still recognized by the replay and
+session report. The `PHD2GUARD_DATA_DIR` environment variable is still honored as a fallback for `GUIDEGUARDIAN_DATA_DIR`.
 
 ## Quick start
 
@@ -295,7 +302,7 @@ versions), so it is easy to spot among browser tabs and on a phone's home screen
 - It can do exactly what the desktop buttons can do (arm, disarm, manual recovery) and nothing else; it never talks to NINA or
   PHD2 itself. A manual recovery is refused while one is already running.
 
-**Headless mode.** `python phd2_guard.py --headless` (or `PHD2Guard.exe --headless`) runs the engine and the web interface with
+**Headless mode.** `python guide_guardian.py --headless` (or `GuideGuardian.exe --headless`) runs the engine and the web interface with
 no window, for a PC beside the telescope. It uses the settings saved by the desktop app on that PC (set them up once in the GUI)
 or an `.ini` file.
 
@@ -308,9 +315,9 @@ or an `.ini` file.
 | `--settings-file my.ini` | Read / write settings from an `.ini` file instead of the registry (also works with the window). |
 
 `--stop` exits 0 when the instance stopped, 1 when none was running and 2 if it did not exit within 20 s. The running
-instance holds a lock on `headless.lock` in `%LOCALAPPDATA%\PHD2Guard` (the OS releases it however the process ends, so a
+instance holds a lock on `headless.lock` in `%LOCALAPPDATA%\GuideGuardian` (the OS releases it however the process ends, so a
 crash or a kill never leaves a false "already running") and watches for `headless.stop`, which `--stop` creates
-(override the folder with the `PHD2GUARD_DATA_DIR` environment variable). Ctrl+C in the console also stops it, and a second headless instance is refused while one is running.
+(override the folder with the `GUIDEGUARDIAN_DATA_DIR` environment variable). Ctrl+C in the console also stops it, and a second headless instance is refused while one is running.
 The packaged exe is a windowed program, so run the script from a console to see the token and log lines; the log file is
 written either way. Press Stop Guarding and let any recovery finish before stopping; stopping the app does not stop PHD2 or NINA.
 
@@ -322,7 +329,7 @@ or while NINA's own *Dither* instruction is running, so it works with either RMS
 3 minutes.
 
 **Verbose debug log.** On the Settings tab, check *Save verbose debug log* and choose a folder to record a detailed
-`phd2guard_debug_<date>_<time>.log` for post-mortems; a new file is started each time it is switched on or the folder changes.
+`guideguardian_debug_<date>_<time>.log` for post-mortems; a new file is started each time it is switched on or the folder changes.
 Lines are timestamped to the millisecond and flushed immediately. It contains: every HTTP call to NINA with status and duration
 (control calls and the sequence state with full bodies; polled bodies only when key fields change, plus a 60 s heartbeat),
 every raw PHD2 event and RPC exchange, a dashboard snapshot every 5 s or on any change, evaluation lines while a breach or
@@ -370,10 +377,10 @@ sessions marked *n/a* rather than "not armed".
 The same engine runs from the command line, without a window:
 
 ```
-python phd2_guard.py --replay PHD2_GuideLog_<date>.txt                         # app defaults
-python phd2_guard.py --replay LOG --threshold 2.0 --sustain 60 --window 40     # try other values
-python phd2_guard.py --replay LOG --sustain 5 --recent 0 --no-lost-pct --wait 0  # a plain "RMS above threshold for 5 s" rule
-python phd2_guard.py --replay LOG --debug-log phd2guard_debug_<date>_<time>.log --output report.txt   # full session report
+python guide_guardian.py --replay PHD2_GuideLog_<date>.txt                         # app defaults
+python guide_guardian.py --replay LOG --threshold 2.0 --sustain 60 --window 40     # try other values
+python guide_guardian.py --replay LOG --sustain 5 --recent 0 --no-lost-pct --wait 0  # a plain "RMS above threshold for 5 s" rule
+python guide_guardian.py --replay LOG --debug-log guideguardian_debug_<date>_<time>.log --output report.txt   # full session report
 ```
 
 Other options: `--unit`, `--cooldown`, `--lost-pct`, `--lost-window`, `--poll`, `--quiet` and `--output FILE` (the packaged
@@ -420,10 +427,10 @@ There is no dedicated "recenter" endpoint, so centering goes through `/equipment
 
 | File | Purpose |
 |---|---|
-| `phd2_guard.py` | The application: engine (monitoring, recovery state machine), PHD2 client, guide-log replay, GUI, headless entry point. |
+| `guide_guardian.py` | The application: engine (monitoring, recovery state machine), PHD2 client, guide-log replay, GUI, headless entry point. |
 | `web_ui.py` | The optional web interface (standard library only). |
-| `make_icon.py` | Generates `assets/phd2guard.ico` from the icon drawn in code. |
-| `build_exe.bat` | Builds `dist\PHD2Guard.exe` with PyInstaller (temporary venv). |
+| `make_icon.py` | Generates `assets/guideguardian.ico` from the icon drawn in code. |
+| `build_exe.bat` | Builds `dist\GuideGuardian.exe` with PyInstaller (temporary venv). |
 | `requirements.txt` | Runtime dependencies (`PyQt6`, `requests`). |
 | `LICENSE` | GNU General Public License v3. |
 | `docs/screenshots/` | The screenshots shown in this README. |
@@ -432,10 +439,10 @@ There is no dedicated "recenter" endpoint, so centering goes through `/equipment
 
 Copyright (c) 2026 Loran Hughes
 
-PHD2 Guard is free software, released under the [GNU General Public License v3](LICENSE) (`GPL-3.0-only`): you may use,
+Guide Guardian is free software, released under the [GNU General Public License v3](LICENSE) (`GPL-3.0-only`): you may use,
 study, share and modify it, and anything you distribute that is based on it must remain under the same license with its
 source available. This matches the license of its GUI toolkit, [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
-(GPL v3). The packaged `PHD2Guard.exe` bundles PyQt6 and Qt; its corresponding source is this repository.
+(GPL v3). The packaged `GuideGuardian.exe` bundles PyQt6 and Qt; its corresponding source is this repository.
 
 ## AI attribution
 

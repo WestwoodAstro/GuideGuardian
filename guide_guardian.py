@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: Copyright (c) 2026 Loran Hughes
 # SPDX-License-Identifier: GPL-3.0-only
-"""PHD2 Guard - guiding watchdog and auto-recenter for NINA (Advanced API v2).
+"""Guide Guardian - guiding watchdog and auto-recenter for NINA (Advanced API v2).
 
 Reads guiding RMS either from the NINA "Advanced API" plugin or straight from PHD2's
 event server (TCP 4400). When Total RMS stays above a threshold for a sustained
@@ -92,7 +92,7 @@ class _Clock:
 
 time = _Clock()
 
-APP_NAME = "PHD2 Guard"
+APP_NAME = "Guide Guardian"
 APP_VERSION = "1.0.0"
 APP_TAGLINE = "Guiding watchdog and session recovery for PHD2 and NINA"
 DEFAULT_URL = "http://localhost:1888/v2/api"
@@ -182,8 +182,23 @@ def load_saved_settings(qs: QSettings) -> Settings:
     return Settings(**{f.name: qs.value(f.name, getattr(d, f.name), type=type(getattr(d, f.name))) for f in fields(Settings)})
 
 
+LEGACY_ORG = "PHD2Guard"          # the settings store of the app's previous name (PHD2 Guard 1.0.0)
+
+
 def open_qsettings(path: str | None) -> QSettings:
-    return QSettings(path, QSettings.Format.IniFormat) if path else QSettings("PHD2Guard", "PHD2Guard")
+    """The settings store: an .ini file, or the registry. First run under the new name: carry over what the previous name
+    saved (its store is left untouched)."""
+    if path:
+        return QSettings(path, QSettings.Format.IniFormat)
+    qs = QSettings("GuideGuardian", "GuideGuardian")
+    if not qs.allKeys():
+        old = QSettings(LEGACY_ORG, LEGACY_ORG)
+        keys = old.allKeys()
+        for k in keys:
+            qs.setValue(k, old.value(k))
+        if keys:
+            qs.sync()
+    return qs
 
 
 def normalize_url(url: str) -> str:
@@ -228,7 +243,7 @@ class DebugLog:
     MAX_BYTES, BACKUPS = 25 * 1024 * 1024, 20
 
     def __init__(self):
-        self._logger = logging.getLogger("phd2guard.debug")
+        self._logger = logging.getLogger("guideguardian.debug")
         self._logger.setLevel(logging.DEBUG)
         self._logger.propagate = False
         self._handler: RotatingFileHandler | None = None
@@ -240,7 +255,7 @@ class DebugLog:
 
     def open(self, folder: str) -> str:
         os.makedirs(folder, exist_ok=True)
-        path = os.path.join(folder, f"phd2guard_debug_{datetime.now():%Y%m%d_%H%M%S}.log")
+        path = os.path.join(folder, f"guideguardian_debug_{datetime.now():%Y%m%d_%H%M%S}.log")
         handler = RotatingFileHandler(path, maxBytes=self.MAX_BYTES, backupCount=self.BACKUPS, encoding="utf-8")
         handler.setFormatter(logging.Formatter("%(asctime)s.%(msecs)03d %(message)s", "%Y-%m-%d %H:%M:%S"))
         self.close()
@@ -732,7 +747,7 @@ class GuardWorker(QThread):
         self._quit = threading.Event()
         self._abort = threading.Event()
         self._client = NinaClient(settings.base_url, self._log_call)
-        self._file_log = logging.getLogger("phd2guard")
+        self._file_log = logging.getLogger("guideguardian")
         self._debug_dir = ""
         self._debug_settings: Settings | None = None
 
@@ -1895,7 +1910,7 @@ def run_replay(segs: list[ReplaySegment], s: Settings, poll: float = 1.0, progre
     restart does). `progress(fraction, text)` is called as the replay advances; `cancel` aborts it with Canceled.
     """
     sim = _SimClock()
-    quiet = logging.getLogger("phd2guard.replay")          # the replay's log lines must not reach phd2_guard.log
+    quiet = logging.getLogger("guideguardian.replay")          # the replay's log lines must not reach guide_guardian.log
     quiet.propagate = False
     if not quiet.handlers:
         quiet.addHandler(logging.NullHandler())
@@ -2674,7 +2689,7 @@ def format_session_report(rep: SessionReport, full_replay: bool = True) -> str:
         add(title)
         add("-" * len(title))
 
-    add("PHD2 GUARD - SESSION REPORT")
+    add("GUIDE GUARDIAN - SESSION REPORT")
     add("=" * 27)
     add(f"PHD2 guide log : {rep.guide_log or '(not named)'}")
     if res.sessions:
@@ -2686,7 +2701,8 @@ def format_session_report(rep: SessionReport, full_replay: bool = True) -> str:
         for p in tl.files:
             add(f"                 {p}")
         if tl.app_info:
-            add(f"Application    : {tl.app_info.split(' | file ')[0]}")
+            env = tl.app_info.split(" | file ")[0].split(" debug log | ", 1)[-1]      # Python / Windows versions
+            add(f"Environment    : {env}")
     else:
         add("Debug log      : not given - this is the rule replay only (what the watchdog would have done)")
     add(f"Rule replayed  : {describe_rule(s)}")
@@ -2894,7 +2910,8 @@ def format_session_report(rep: SessionReport, full_replay: bool = True) -> str:
 def _file_span(path: str, kind: str) -> tuple[datetime, datetime] | None:
     """(start, end) of a guide log or a debug log, from its file name and its last-write time."""
     name = os.path.basename(path)
-    pat = r"PHD2_GuideLog_(\d{4}-\d\d-\d\d)_(\d{6})" if kind == "guide" else r"phd2guard_debug_(\d{8})_(\d{6})"
+    pat = (r"PHD2_GuideLog_(\d{4}-\d\d-\d\d)_(\d{6})" if kind == "guide"
+           else r"(?:guideguardian|phd2guard)_debug_(\d{8})_(\d{6})")      # 1.0.0 named its debug logs phd2guard_*
     m = re.match(pat, name)
     if not m:
         return None
@@ -2915,10 +2932,10 @@ def guess_counterpart(path: str, want: str) -> str:
     if mine is None:
         return ""
     folder = os.path.dirname(os.path.abspath(path))
-    pattern = "PHD2_GuideLog*.txt" if want == "guide" else "phd2guard_debug_*.log"
+    patterns = ("PHD2_GuideLog*.txt",) if want == "guide" else ("guideguardian_debug_*.log", "phd2guard_debug_*.log")
     found: dict[str, float] = {}
     for d in dict.fromkeys([folder, os.path.dirname(folder), default_guide_log_dir()]):
-        for cand in glob.glob(os.path.join(glob.escape(d), pattern)):
+        for cand in (c for pattern in patterns for c in glob.glob(os.path.join(glob.escape(d), pattern))):
             span = _file_span(cand, want)
             if span is None:
                 continue
@@ -2952,8 +2969,8 @@ def run_session_report(guide_log: str, s: Settings, debug_log: str = "", use_log
             raise OSError(f"Cannot find the debug log: {debug_log}")
         events = parse_debug_log(files, step(0.05, 0.4, "Reading the debug log..."), cancel)
         if not events:
-            raise ValueError("No usable lines were found in the debug log. Is it a PHD2 Guard verbose debug log "
-                             "(phd2guard_debug_<date>_<time>.log)?")
+            raise ValueError("No usable lines were found in the debug log. Is it a Guide Guardian verbose debug log "
+                             "(guideguardian_debug_<date>_<time>.log)?")
         tl = build_timeline(events, files)
         if use_logged_rule and tl.configs:
             s, rule_source, notes = logged_rule(tl)
@@ -3289,7 +3306,7 @@ class ReplayWorker(QThread):
         except (OSError, ValueError) as exc:
             self.failed.emit(str(exc))
         except Exception as exc:                           # noqa: BLE001 - shown to the user, details in the log file
-            logging.getLogger("phd2guard").error("Replay failed: %s", traceback.format_exc())
+            logging.getLogger("guideguardian").error("Replay failed: %s", traceback.format_exc())
             self.failed.emit(f"Replay failed: {exc}")
 
 
@@ -3313,7 +3330,7 @@ class ReplayDialog(QDialog):
         self.ed_path.setPlaceholderText("a PHD2 guide log, e.g. PHD2_GuideLog_2026-10-08_134943.txt")
         btn_browse = QPushButton("Browse..."); btn_browse.clicked.connect(self._browse_guide)
         self.ed_debug = QLineEdit()
-        self.ed_debug.setPlaceholderText("optional: the watchdog's debug log from the same night, e.g. phd2guard_debug_20261008_212347.log")
+        self.ed_debug.setPlaceholderText("optional: the watchdog's debug log from the same night, e.g. guideguardian_debug_20261008_212347.log")
         btn_dbrowse = QPushButton("Browse..."); btn_dbrowse.clicked.connect(self._browse_debug)
         btn_dclear = QPushButton("Clear"); btn_dclear.clicked.connect(lambda: self.ed_debug.clear())
         self.chk_logged = QCheckBox("Replay the rule that was in force (read from the debug log)")
@@ -3456,7 +3473,7 @@ class ReplayDialog(QDialog):
 
     def _browse_debug(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Watchdog debug log", self._start_dir(self.ed_debug),
-                                              "Debug logs (phd2guard_debug_*.log*);;Log files (*.log *.log.*);;All files (*)")
+                                              "Debug logs (guideguardian_debug_*.log* phd2guard_debug_*.log*);;Log files (*.log *.log.*);;All files (*)")
         if path:
             self.ed_debug.setText(path)
             self._qs.setValue("replay_dir", os.path.dirname(path))
@@ -3906,7 +3923,7 @@ class MainWindow(QMainWindow):
         pix.setDevicePixelRatio(2.0)                          # drawn at 256 px, shown at 128 logical px: crisp on HiDPI
         logo.setPixmap(pix)
         logo.setFixedSize(128, 128)
-        title = QLabel("PHD2 Guard")
+        title = QLabel("Guide Guardian")
         title.setStyleSheet("color:#ffffff;font-size:34px;font-weight:700;letter-spacing:1px")
         tagline = QLabel(APP_TAGLINE)
         tagline.setStyleSheet(f"color:{ICON_TEAL};font-size:15px")
@@ -3926,7 +3943,7 @@ class MainWindow(QMainWindow):
         gpl = "https://www.gnu.org/licenses/gpl-3.0.html"
         body = QLabel(
             f"<p style='font-size:15px'><b>Copyright &copy; 2026 Loran Hughes</b></p>"
-            f"<p>PHD2 Guard is free software: you can redistribute it and/or modify it under the terms of the "
+            f"<p>Guide Guardian is free software: you can redistribute it and/or modify it under the terms of the "
             f"<a href='{gpl}'>GNU General Public License, version 3</a> (<code>GPL-3.0-only</code>). It is distributed in the "
             f"hope that it will be useful, but <b>without any warranty</b>; without even the implied warranty of "
             f"merchantability or fitness for a particular purpose. The corresponding source code is the project repository "
@@ -4176,17 +4193,17 @@ class MainWindow(QMainWindow):
 
 def setup_file_logging() -> None:
     folder = app_data_dir()
-    handler = logging.FileHandler(os.path.join(folder, "phd2_guard.log"), encoding="utf-8")
+    handler = logging.FileHandler(os.path.join(folder, "guide_guardian.log"), encoding="utf-8")
     handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
-    logger = logging.getLogger("phd2guard")
+    logger = logging.getLogger("guideguardian")
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
 
 
 def app_data_dir() -> str:
-    """Per-user folder for the log and the headless instance's pid / stop files (PHD2GUARD_DATA_DIR overrides)."""
-    folder = os.environ.get("PHD2GUARD_DATA_DIR") or os.path.join(
-        os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "PHD2Guard")
+    """Per-user folder for the log and the headless instance's pid / stop files (GUIDEGUARDIAN_DATA_DIR overrides)."""
+    folder = os.environ.get("GUIDEGUARDIAN_DATA_DIR") or os.environ.get("PHD2GUARD_DATA_DIR") or os.path.join(
+        os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "GuideGuardian")
     os.makedirs(folder, exist_ok=True)
     return folder
 
@@ -4283,7 +4300,7 @@ def stop_headless(timeout_s: float = 20.0) -> int:
             return 0
         time.sleep(0.2)
     print(f"The headless instance (pid {pid or '?'}) did not exit within {timeout_s:.0f} s; end it in Task Manager "
-          f"(taskkill /IM PHD2Guard.exe /F).", flush=True)
+          f"(taskkill /IM GuideGuardian.exe /F).", flush=True)
     return 2
 
 
@@ -4414,7 +4431,7 @@ def main() -> int:
     for name in ("stdout", "stderr"):                      # a windowed exe has no console streams
         if getattr(sys, name) is None:
             setattr(sys, name, open(os.devnull, "w"))
-    ap = argparse.ArgumentParser(description="PHD2 Guard - NINA/PHD2 guiding watchdog")
+    ap = argparse.ArgumentParser(description="Guide Guardian - NINA/PHD2 guiding watchdog")
     ap.add_argument("--headless", action="store_true", help="no window: run the engine and the web interface only")
     ap.add_argument("--port", type=int, help="web interface port (headless; default: the saved setting)")
     ap.add_argument("--token", help="web interface access token (headless; default: the saved token)")
@@ -4451,7 +4468,7 @@ def main() -> int:
     if sys.platform == "win32":                           # own taskbar identity (and icon) even when run via python
         try:
             import ctypes
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PHD2Guard.Watchdog")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("GuideGuardian.Watchdog")
         except Exception:                                  # noqa: BLE001 - cosmetic only
             pass
     app = QApplication([sys.argv[0]] + qt_args)

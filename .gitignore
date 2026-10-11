@@ -5,7 +5,7 @@ __pycache__/
 venv/
 env/
 
-# Build output (attach dist/PHD2Guard.exe to a GitHub release instead of committing it)
+# Build output (attach dist/GuideGuardian.exe to a GitHub release instead of committing it)
 build/
 dist/
 *.spec
@@ -13,6 +13,7 @@ dist/
 # Logs and diagnostics produced by the app / PHD2 / NINA
 *.log
 *.log.*
+guideguardian_debug_*
 phd2guard_debug_*
 PHD2_GuideLog_*.txt
 PHD2_DebugLog_*.txt

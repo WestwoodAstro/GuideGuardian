@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 Loran Hughes
 # SPDX-License-Identifier: GPL-3.0-only
-"""Optional LAN web interface for PHD2 Guard: a live read-only view plus token-protected controls.
+"""Optional LAN web interface for Guide Guardian: a live read-only view plus token-protected controls.
 
 Standard library only (works inside the PyInstaller exe). The server never talks to NINA or PHD2 itself: it serves a
 `WebState` snapshot that the app keeps up to date and forwards three commands (arm / disarm / manual) to callbacks the
@@ -30,7 +30,7 @@ FAIL_LIMIT, FAIL_WINDOW_S = 5, 60.0
 # 16-32 px (plain ring, bolder star), so the tab icon stays legible.
 _STAR = "M50 14Q54 46 86 50Q54 54 50 86Q46 54 14 50Q46 46 50 14z"
 LOGO_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="PHD2 Guard logo">'
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Guide Guardian logo">'
     '<rect width="100" height="100" rx="20" fill="#0f1b33"/>'
     '<g fill="none" stroke="#2ec4b6" stroke-linecap="round" stroke-linejoin="round">'
     '<path d="M50 16A34 34 0 1 1 25.96 25.96" stroke-width="5"/>'
@@ -88,7 +88,7 @@ class WebServer:
     """ThreadingHTTPServer wrapper. `commands` maps 'arm' / 'disarm' / 'manual' to zero-argument callables."""
 
     def __init__(self, state: WebState, commands: dict, host: str, port: int, token: str,
-                 view_needs_token: bool = False, title: str = "PHD2 Guard", tagline: str = "", version: str = "",
+                 view_needs_token: bool = False, title: str = "Guide Guardian", tagline: str = "", version: str = "",
                  icons: dict | None = None):
         self.state, self.commands, self.host, self.port = state, commands, host, port
         self.token, self.view_needs_token, self.title = token, view_needs_token, title
@@ -170,7 +170,7 @@ def client_allowed(addr: str) -> bool:
 
 class _Handler(BaseHTTPRequestHandler):
     ctx: WebServer
-    server_version = "PHD2Guard"
+    server_version = "GuideGuardian"
     protocol_version = "HTTP/1.0"
 
     def log_message(self, *args):                       # keep the console / log quiet
@@ -353,7 +353,7 @@ font:12.5px/1.5 Consolas,ui-monospace,monospace;white-space:pre-wrap;word-break:
 <p><small id="foot"></small></p></div>
 <script>
 const $=id=>document.getElementById(id);
-let token=localStorage.getItem('phd2guard_token')||'',after=0,can=false,lastOk=0;
+let token=localStorage.getItem('guideguardian_token')||localStorage.getItem('phd2guard_token')||'',after=0,can=false,lastOk=0;
 const f=(v,u)=>v==null?'-':(typeof v==='number'?v.toFixed(2):v)+(u||'');
 function hdr(){return token?{'X-Token':token}:{}}
 async function post(cmd,body){
@@ -364,7 +364,7 @@ async function post(cmd,body){
   tick();
 }
 $('unlock').onclick=()=>{const t=prompt('Access token (shown in the app\'s Web interface settings)',token);
-  if(t!==null){token=t.trim();localStorage.setItem('phd2guard_token',token);tick()}};
+  if(t!==null){token=t.trim();localStorage.setItem('guideguardian_token',token);tick()}};
 $('arm').onclick=()=>post('arm');$('disarm').onclick=()=>post('disarm');
 $('manual').onclick=()=>{if(confirm('Stop the exposure and guiding, re-center the target, restart guiding and resume imaging now?'))post('manual',{confirm:true})};
 function render(s){
