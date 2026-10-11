@@ -7,6 +7,8 @@ resumes the sequence, without waiting for you to notice.
 It is a Windows desktop application (PyQt6) with an optional local-network web interface for monitoring and control from
 another computer, tablet or phone.
 
+**[Download the latest release](https://github.com/WestwoodAstro/PHD2Guard/releases/latest)**: a single `PHD2Guard.exe`, nothing to install. Windows 10/11, 64-bit.
+
 > **Use at your own risk.** PHD2 Guard stops and restarts your sequence, slews your mount and restarts guiding. Try it with the
 > NINA and PHD2 simulators before relying on it unattended, and keep NINA's own safety monitor / end-of-sequence steps for
 > parking and closing up. This project is not affiliated with NINA or PHD2.
@@ -82,6 +84,9 @@ and after.
 - `PyQt6` and `requests` (see `requirements.txt`).
 
 ## Installation
+
+**Download the executable.** Get `PHD2Guard.exe` from the [latest release](https://github.com/WestwoodAstro/PHD2Guard/releases/latest) and run it. The exe is not code-signed, so
+Windows SmartScreen may warn on first run: choose *More info*, then *Run anyway*. The release notes list the file's SHA-256.
 
 **Run from source**
 
