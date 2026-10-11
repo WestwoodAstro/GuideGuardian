@@ -93,7 +93,7 @@ class _Clock:
 time = _Clock()
 
 APP_NAME = "Guide Guardian"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 APP_TAGLINE = "Guiding watchdog and session recovery for PHD2 and NINA"
 DEFAULT_URL = "http://localhost:1888/v2/api"
 POLL_TIMEOUT = (3.05, 8)          # (connect, read) seconds for status polls
