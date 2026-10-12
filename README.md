@@ -1,3 +1,5 @@
+![Guide Guardian: guiding watchdog and session recovery for PHD2 and NINA](docs/screenshots/guide-guardian-social-1200x630.png)
+
 # Guide Guardian
 
 A guiding watchdog for astrophotography rigs that use **NINA** and **PHD2**. It watches the quality of your guiding while a NINA
