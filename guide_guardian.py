@@ -94,6 +94,7 @@ time = _Clock()
 
 APP_NAME = "Guide Guardian"
 APP_VERSION = "1.0.1"
+PROJECT_URL = "https://github.com/WestwoodAstro/GuideGuardian"
 APP_TAGLINE = "Guiding watchdog and session recovery for PHD2 and NINA"
 DEFAULT_URL = "http://localhost:1888/v2/api"
 POLL_TIMEOUT = (3.05, 8)          # (connect, read) seconds for status polls
@@ -3943,6 +3944,8 @@ class MainWindow(QMainWindow):
         gpl = "https://www.gnu.org/licenses/gpl-3.0.html"
         body = QLabel(
             f"<p style='font-size:15px'><b>Copyright &copy; 2026 Loran Hughes</b></p>"
+            f"<p><b>Project:</b> <a href='{PROJECT_URL}'>{PROJECT_URL.removeprefix('https://')}</a> "
+            f"(source code, releases and issue tracker)</p>"
             f"<p>Guide Guardian is free software: you can redistribute it and/or modify it under the terms of the "
             f"<a href='{gpl}'>GNU General Public License, version 3</a> (<code>GPL-3.0-only</code>). It is distributed in the "
             f"hope that it will be useful, but <b>without any warranty</b>; without even the implied warranty of "
