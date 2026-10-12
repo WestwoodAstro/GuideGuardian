@@ -93,7 +93,7 @@ class _Clock:
 time = _Clock()
 
 APP_NAME = "Guide Guardian"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 PROJECT_URL = "https://github.com/WestwoodAstro/GuideGuardian"
 APP_TAGLINE = "Guiding watchdog and session recovery for PHD2 and NINA"
 DEFAULT_URL = "http://localhost:1888/v2/api"
